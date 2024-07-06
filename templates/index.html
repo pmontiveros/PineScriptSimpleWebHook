@@ -59,6 +59,7 @@
             padding: 10px;
             border-radius: 10px;
             margin-bottom: 10px;
+            word-wrap: break-word;
         }
     </style>
 </head>
@@ -122,14 +123,14 @@
                         const listItem = document.createElement('li');
                         const messageBubble = document.createElement('div');
                         messageBubble.className = 'message-bubble';
-                        messageBubble.innerHTML = `
-                            <strong>Symbol:</strong> ${novedad.symbol}<br>
-                            <strong>Price:</strong> ${novedad.price}<br>
-                            <strong>Alert Name:</strong> ${novedad.alert_name}<br>
-                            <strong>Message:</strong> ${novedad.message}<br>
-                            <strong>Time:</strong> ${new Date(novedad.time).toLocaleString()}<br>
-                            <strong>Received At:</strong> ${new Date(novedad.timestamp).toLocaleString()}
-                        `;
+                        let messageContent = '';
+                        for (const key in novedad) {
+                            if (key !== 'timestamp') {
+                                messageContent += `<strong>${key.charAt(0).toUpperCase() + key.slice(1)}:</strong> ${novedad[key]}<br>`;
+                            }
+                        }
+                        messageContent += `<strong>Received At:</strong> ${new Date(novedad.timestamp).toLocaleString()}`;
+                        messageBubble.innerHTML = messageContent;
                         listItem.appendChild(messageBubble);
                         novedadesList.appendChild(listItem);
                     });
