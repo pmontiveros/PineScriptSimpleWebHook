@@ -1,0 +1,7 @@
+{
+  "symbol": "AAPL",
+  "price": 150.25,
+  "alert_name": "Price Alert",
+  "message": "The price of AAPL has reached $150.25",
+  "time": "2024-07-06T14:30:00Z"
+}

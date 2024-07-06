@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SimpleClient Dashboard</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+            margin: 0;
+        }
+        .container {
+            display: flex;
+            flex: 1;
+            width: 100%;
+        }
+        .novedades {
+            flex: 3;
+            border-right: 1px solid #333;
+            padding: 20px;
+            overflow-y: scroll;
+        }
+        .dashboard {
+            flex: 1;
+            padding: 20px;
+        }
+        .semaforo {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-top: 10px;
+        }
+        .alive {
+            background-color: green;
+        }
+        .down {
+            background-color: red;
+        }
+        .footer {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            background-color: #333;
+            padding: 10px;
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+        }
+        .select-container {
+            margin-bottom: 0;
+        }
+        .message-bubble {
+            background-color: #3a3a3a;
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="novedades">
+            <h2>Últimas Novedades</h2>
+            <ul id="novedades-list">
+                <!-- Novedades se insertarán aquí -->
+            </ul>
+        </div>
+        <div class="dashboard">
+            <h2>Dashboard</h2>
+            <p>Total de novedades recibidas: <span id="total-novedades">0</span></p>
+            <p>Servidor Webhook Status: <span class="semaforo" id="semaforo"></span></p>
+        </div>
+    </div>
+    <div class="footer">
+        <div class="select-container">
+            <label for="refresh-interval">Actualizar cada:</label>
+            <select id="refresh-interval">
+                <option value="1000">1 segundo</option>
+                <option value="5000">5 segundos</option>
+                <option value="30000">30 segundos</option>
+                <option value="120000">120 segundos</option>
+            </select>
+        </div>
+    </div>
+
+    <script>
+        let refreshInterval = 5000; // Valor predeterminado de 5 segundos
+
+        document.getElementById('refresh-interval').addEventListener('change', function() {
+            refreshInterval = parseInt(this.value);
+            clearInterval(refreshTimer);
+            refreshTimer = setInterval(updateNovedades, refreshInterval);
+        });
+
+        function updateSemaforo() {
+            fetch('/health')
+                .then(response => response.json())
+                .then(data => {
+                    const semaforo = document.getElementById('semaforo');
+                    if (data.status === 'alive') {
+                        semaforo.classList.add('alive');
+                        semaforo.classList.remove('down');
+                    } else {
+                        semaforo.classList.add('down');
+                        semaforo.classList.remove('alive');
+                    }
+                });
+        }
+
+        function updateNovedades() {
+            fetch('/novedades')
+                .then(response => response.json())
+                .then(data => {
+                    const novedadesList = document.getElementById('novedades-list');
+                    novedadesList.innerHTML = '';
+                    data.novedades.forEach(novedad => {
+                        const listItem = document.createElement('li');
+                        const messageBubble = document.createElement('div');
+                        messageBubble.className = 'message-bubble';
+                        let messageContent = '';
+                        for (const key in novedad) {
+                            if (novedad.hasOwnProperty(key)) {
+                                if (key === 'timestamp') {
+                                    messageContent += `<strong>Received At:</strong> ${new Date(novedad[key]).toLocaleString()}<br>`;
+                                } else {
+                                    messageContent += `<strong>${key.charAt(0).toUpperCase() + key.slice(1)}:</strong> ${novedad[key]}<br>`;
+                                }
+                            }
+                        }
+                        messageBubble.innerHTML = messageContent;
+                        listItem.appendChild(messageBubble);
+                        novedadesList.appendChild(listItem);
+                    });
+                    document.getElementById('total-novedades').innerText = data.novedades.length;
+                });
+        }
+
+        let refreshTimer = setInterval(updateNovedades, refreshInterval);
+        setInterval(updateSemaforo, 5000); // Actualiza el semáforo cada 5 segundos
+        updateSemaforo(); // Llama a la función inmediatamente para la primera actualización
+        updateNovedades(); // Llama a la función inmediatamente para la primera actualización
+    </script>
+</body>
+</html>
